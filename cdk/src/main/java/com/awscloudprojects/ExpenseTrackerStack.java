@@ -8,7 +8,7 @@ import software.amazon.awscdk.services.apigateway.LambdaIntegration;
 import software.amazon.awscdk.services.apigatewayv2.AddRoutesOptions;
 import software.amazon.awscdk.services.apigatewayv2.HttpApi;
 import software.amazon.awscdk.services.apigatewayv2.HttpMethod;
-import software.amazon.awscdk.services.apigatewayv2.HttpRouteIntegration;
+import software.amazon.awscdk.services.apigatewayv2.PayloadFormatVersion;
 import software.amazon.awscdk.services.dynamodb.Attribute;
 import software.amazon.awscdk.services.dynamodb.AttributeType;
 import software.amazon.awscdk.services.dynamodb.BillingMode;
@@ -79,6 +79,8 @@ public class ExpenseTrackerStack extends Stack {
                 .sortKey(Attribute.builder().name("status").type(AttributeType.STRING).build())
                 .build());
 
+        dynamoDbTable.grantFullAccess(expenseTrackerLambda);
+
         HttpApi httpApi = HttpApi.Builder.create(this, "http-api-gateway")
                 .apiName(id + "-http-api-gateway")
                 .description("HTTP API Gateway")
@@ -86,7 +88,9 @@ public class ExpenseTrackerStack extends Stack {
 
         httpApi.addRoutes(AddRoutesOptions.builder()
                         .path("/expense")
-                        .integration(HttpLambdaIntegration.Builder.create("expense-tracker-lambda-integration", expenseTrackerLambda).build())
+                        .integration(HttpLambdaIntegration.Builder.create("expense-tracker-lambda-integration", expenseTrackerLambda)
+                                .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)
+                                .build())
                 .methods(List.of(HttpMethod.POST))
                 .build());
 

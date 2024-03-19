@@ -1,4 +1,4 @@
-package com.awscloudprojects;
+package com.awscloudprojects.lambda;
 
 import static org.junit.Assert.assertTrue;
 

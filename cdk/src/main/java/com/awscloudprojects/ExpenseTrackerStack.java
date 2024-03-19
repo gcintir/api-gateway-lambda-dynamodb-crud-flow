@@ -9,6 +9,13 @@ import software.amazon.awscdk.services.apigatewayv2.AddRoutesOptions;
 import software.amazon.awscdk.services.apigatewayv2.HttpApi;
 import software.amazon.awscdk.services.apigatewayv2.HttpMethod;
 import software.amazon.awscdk.services.apigatewayv2.HttpRouteIntegration;
+import software.amazon.awscdk.services.dynamodb.Attribute;
+import software.amazon.awscdk.services.dynamodb.AttributeType;
+import software.amazon.awscdk.services.dynamodb.BillingMode;
+import software.amazon.awscdk.services.dynamodb.GlobalSecondaryIndexProps;
+import software.amazon.awscdk.services.dynamodb.LocalSecondaryIndexProps;
+import software.amazon.awscdk.services.dynamodb.ProjectionType;
+import software.amazon.awscdk.services.dynamodb.Table;
 import software.amazon.awscdk.services.iam.ManagedPolicy;
 import software.amazon.awscdk.services.iam.Role;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
@@ -25,9 +32,9 @@ public class ExpenseTrackerStack extends Stack {
     public ExpenseTrackerStack(final Construct scope, final String id, final StackProps props) {
         super(scope, id, props);
 
-        Role executionRole = Role.Builder.create(this, id + "-CreateOrderLambdaRole")
+        Role executionRole = Role.Builder.create(this, id + "-ExpenseTrackerLambdaRole")
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
-                .roleName(id + "-CreateOrderLambdaRole")
+                .roleName(id + "-ExpenseTrackerLambdaRole")
                 .build();
         executionRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"));
 
@@ -46,6 +53,31 @@ public class ExpenseTrackerStack extends Stack {
                         .removalPolicy(RemovalPolicy.DESTROY)
                         .build())
                 .build();
+
+        Table dynamoDbTable = Table.Builder.create(this, "dynamodb-table")
+                .tableName("expenses")
+                .partitionKey(Attribute.builder().name("user_id").type(AttributeType.STRING).build())
+                .sortKey(Attribute.builder().name("creation_time").type(AttributeType.NUMBER).build())
+                .billingMode(BillingMode.PAY_PER_REQUEST)
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .build();
+
+        dynamoDbTable.addGlobalSecondaryIndex(GlobalSecondaryIndexProps.builder()
+                .indexName("gsi-creationTimeUserId")
+                .partitionKey(Attribute.builder().name("creation_time").type(AttributeType.NUMBER).build())
+                .sortKey(Attribute.builder().name("user_id").type(AttributeType.STRING).build())
+                .projectionType(ProjectionType.ALL)
+                .build());
+
+        dynamoDbTable.addLocalSecondaryIndex(LocalSecondaryIndexProps.builder()
+                        .indexName("lsi-cost")
+                        .sortKey(Attribute.builder().name("cost").type(AttributeType.NUMBER).build())
+                .build());
+
+        dynamoDbTable.addLocalSecondaryIndex(LocalSecondaryIndexProps.builder()
+                .indexName("lsi-status")
+                .sortKey(Attribute.builder().name("status").type(AttributeType.STRING).build())
+                .build());
 
         HttpApi httpApi = HttpApi.Builder.create(this, "http-api-gateway")
                 .apiName(id + "-http-api-gateway")

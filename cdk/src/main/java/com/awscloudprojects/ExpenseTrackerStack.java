@@ -94,5 +94,22 @@ public class ExpenseTrackerStack extends Stack {
                 .methods(List.of(HttpMethod.POST))
                 .build());
 
+        httpApi.addRoutes(AddRoutesOptions.builder()
+                .path("/expense")
+                .integration(HttpLambdaIntegration.Builder.create("expense-tracker-lambda-integration", expenseTrackerLambda)
+                        .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)
+                        .build())
+                .methods(List.of(HttpMethod.GET))
+                .build());
+
+        httpApi.addRoutes(AddRoutesOptions.builder()
+                .path("/expense/users/{userId}/creationTime/{creationTime}")
+                .integration(HttpLambdaIntegration.Builder.create("expense-tracker-lambda-integration", expenseTrackerLambda)
+                        .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)
+                        .build())
+                .methods(List.of(HttpMethod.DELETE))
+                .build());
+
+
     }
 }

@@ -99,6 +99,14 @@ public class ExpenseTrackerStack extends Stack {
                 .integration(HttpLambdaIntegration.Builder.create("expense-tracker-lambda-integration", expenseTrackerLambda)
                         .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)
                         .build())
+                .methods(List.of(HttpMethod.PUT))
+                .build());
+
+        httpApi.addRoutes(AddRoutesOptions.builder()
+                .path("/expense")
+                .integration(HttpLambdaIntegration.Builder.create("expense-tracker-lambda-integration", expenseTrackerLambda)
+                        .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)
+                        .build())
                 .methods(List.of(HttpMethod.GET))
                 .build());
 

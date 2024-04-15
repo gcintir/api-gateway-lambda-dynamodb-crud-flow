@@ -1,22 +1,67 @@
 package com.awscloudprojects.model;
 
+import java.util.List;
+
+/**
+ *
+
+ * Expense
+
+ String userId (user_id) PK
+
+ String id (id)  SK
+
+ Long creationTime (creation_time)
+
+ String category (category)
+
+ Float cost (cost)
+
+ String description (description)
+
+ String status (status)
+
+ List<String> tags (tags)
+
+ ------------
+
+ gsi-creationTimeUserId
+
+ creation_time, user_id
+
+
+ lsi-cost
+
+ cost
+
+
+ lsi-status
+
+ status
+ */
+
+
 public class Expense {
     private String userId;
-    private Long creationTime;
+    private String id; // set initially
+    private Long creationTime; // set initially
     private String category;
-    private Integer cost;
+    private Float cost;
     private String description;
     private String status;
+    private List<String> tags;
 
     public Expense() {
     }
-    public Expense(String userId, Long creationTime, String category, Integer cost, String description, String status) {
+    public Expense(String userId, String id, Long creationTime, String category, Float cost, String description, String status, List<String> tags) {
         this.userId = userId;
+        this.id = id;
         this.creationTime = creationTime;
         this.category = category;
         this.cost = cost;
         this.description = description;
         this.status = status;
+        this.tags = tags;
     }
 
     public String getUserId() {
@@ -25,6 +70,14 @@ public class Expense {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public Long getCreationTime() {
@@ -43,11 +96,11 @@ public class Expense {
         this.category = category;
     }
 
-    public Integer getCost() {
+    public Float getCost() {
         return cost;
     }
 
-    public void setCost(Integer cost) {
+    public void setCost(Float cost) {
         this.cost = cost;
     }
 
@@ -65,5 +118,13 @@ public class Expense {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
     }
 }

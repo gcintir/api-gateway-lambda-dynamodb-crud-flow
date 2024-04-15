@@ -57,7 +57,7 @@ public class ExpenseTrackerStack extends Stack {
         Table dynamoDbTable = Table.Builder.create(this, "dynamodb-table")
                 .tableName("expenses")
                 .partitionKey(Attribute.builder().name("user_id").type(AttributeType.STRING).build())
-                .sortKey(Attribute.builder().name("creation_time").type(AttributeType.NUMBER).build())
+                .sortKey(Attribute.builder().name("id").type(AttributeType.STRING).build())
                 .billingMode(BillingMode.PAY_PER_REQUEST)
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
@@ -111,7 +111,7 @@ public class ExpenseTrackerStack extends Stack {
                 .build());
 
         httpApi.addRoutes(AddRoutesOptions.builder()
-                .path("/expense/users/{userId}/creationTime/{creationTime}")
+                .path("/expense/users/{userId}/id/{id}")
                 .integration(HttpLambdaIntegration.Builder.create("expense-tracker-lambda-integration", expenseTrackerLambda)
                         .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)
                         .build())

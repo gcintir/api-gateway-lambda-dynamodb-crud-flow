@@ -7,12 +7,14 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.awscloudprojects.model.Expense;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
@@ -66,6 +68,7 @@ public class ExpenseTrackerLambda implements RequestHandler<APIGatewayProxyReque
                 Map<String, String> queryParametersMap = event.getQueryStringParameters();
                 String accessType = Objects.nonNull(queryParametersMap.get("accessType")) ? queryParametersMap.get("accessType") : null;
 
+                /*
                 if (accessType.equals("expenseByUserIdAndCreationTime")) {
                     String userId = Objects.nonNull(queryParametersMap.get("userId")) ? queryParametersMap.get("userId") : null;
                     String creationTime = Objects.nonNull(queryParametersMap.get("creationTime")) ? queryParametersMap.get("creationTime") : null;
@@ -93,14 +96,15 @@ public class ExpenseTrackerLambda implements RequestHandler<APIGatewayProxyReque
                     apiGatewayProxyResponseEvent.setStatusCode(200);
                 }
 
+                 */
 
             } else if (event.getHttpMethod().equals("DELETE")) {
                 Map<String, String> pathParameters = event.getPathParameters();
                 String userId = Objects.nonNull(pathParameters.get("userId")) ? pathParameters.get("userId") : null;
-                String creationTime = Objects.nonNull(pathParameters.get("creationTime")) ? pathParameters.get("creationTime") : null;
-                logger.info("received userId:{} creationTime:{}", userId, creationTime);
-                deleteExpenseByUserIdAndCreationTime(userId, creationTime);
-                apiGatewayProxyResponseEvent.setBody("expense deleted for userId:" + userId + " creationTime:" + creationTime);
+                String id = Objects.nonNull(pathParameters.get("id")) ? pathParameters.get("id") : null;
+                logger.info("received userId:{} id:{}", userId, id);
+                deleteExpenseByUserIdAndId(userId, id);
+                apiGatewayProxyResponseEvent.setBody("expense deleted for userId:" + userId + " id:" + id);
                 apiGatewayProxyResponseEvent.setStatusCode(200);
             } else {
 
@@ -118,11 +122,13 @@ public class ExpenseTrackerLambda implements RequestHandler<APIGatewayProxyReque
         try {
             HashMap<String, AttributeValue> itemMap = new HashMap<>();
             itemMap.put("user_id", AttributeValue.builder().s(expense.getUserId()).build());
-            itemMap.put("creation_time", AttributeValue.builder().n(expense.getCreationTime() + "").build());
+            itemMap.put("id", AttributeValue.builder().s(UUID.randomUUID().toString()).build());
+            itemMap.put("creation_time", AttributeValue.builder().n(new Date().getTime() + "").build());
             itemMap.put("category", AttributeValue.builder().s(expense.getCategory()).build());
             itemMap.put("cost", AttributeValue.builder().n(expense.getCost() + "").build());
             itemMap.put("description", AttributeValue.builder().s(expense.getDescription()).build());
             itemMap.put("status", AttributeValue.builder().s(expense.getStatus()).build());
+            itemMap.put("tags", AttributeValue.builder().ss(expense.getTags()).build());
 
             PutItemRequest putItemRequest = PutItemRequest.builder()
                     .tableName(DDB_TABLE_NAME)
@@ -130,7 +136,7 @@ public class ExpenseTrackerLambda implements RequestHandler<APIGatewayProxyReque
                     .build();
 
             PutItemResponse putItemResponse = dynamoDbClient.putItem(putItemRequest);
-            logger.info("Expense creation completed with statusCode:{} requestId:{}", putItemResponse.sdkHttpResponse().statusCode(), putItemResponse.responseMetadata().requestId());
+            logger.info("Expense creation completed with id:{} statusCode:{} requestId:{}", expense.getId(), putItemResponse.sdkHttpResponse().statusCode(), putItemResponse.responseMetadata().requestId());
 
             return expense;
         } catch (DynamoDbException e) {
@@ -190,11 +196,11 @@ public class ExpenseTrackerLambda implements RequestHandler<APIGatewayProxyReque
         }
     }
 
-    private void deleteExpenseByUserIdAndCreationTime(String userId, String creationTime) {
+    private void deleteExpenseByUserIdAndId(String userId, String id) {
         try {
             HashMap<String, AttributeValue> keyMap = new HashMap<>();
             keyMap.put("user_id", AttributeValue.builder().s(userId).build());
-            keyMap.put("creation_time", AttributeValue.builder().n(creationTime).build());
+            keyMap.put("id", AttributeValue.builder().s(id).build());
 
             DeleteItemRequest deleteItemRequest = DeleteItemRequest.builder()
                     .tableName(DDB_TABLE_NAME)
@@ -210,6 +216,8 @@ public class ExpenseTrackerLambda implements RequestHandler<APIGatewayProxyReque
         }
 
     }
+
+    /*
 
     private Optional<Expense> getExpenseByUserIdAndCreationTime (String userId, String creationTime) {
         try {
@@ -247,6 +255,9 @@ public class ExpenseTrackerLambda implements RequestHandler<APIGatewayProxyReque
         }
     }
 
+     */
+
+    /*
     private List<Expense> getExpenseListByUserId (String userId) {
         List<Expense> expenseList = new ArrayList<>();
         try {
@@ -291,6 +302,9 @@ public class ExpenseTrackerLambda implements RequestHandler<APIGatewayProxyReque
         }
     }
 
+     */
+
+    /*
     private List<Expense> getExpenseListByUserIdAndCreationTimeRange (String userId, String creationTimeMin, String creationTimeMax) {
         List<Expense> expenseList = new ArrayList<>();
         try {
@@ -336,6 +350,8 @@ public class ExpenseTrackerLambda implements RequestHandler<APIGatewayProxyReque
             throw new RuntimeException(e);
         }
     }
+
+     */
 
 
 

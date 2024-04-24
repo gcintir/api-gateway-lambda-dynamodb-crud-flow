@@ -41,3 +41,5 @@ curl --location --request GET 'https://jsmulddoee.execute-api.us-east-1.amazonaw
 
 
 curl --location --request DELETE 'https://jsmulddoee.execute-api.us-east-1.amazonaws.com/product/p-1'
+
+curl --location --request PUT 'https://jsmulddoee.execute-api.us-east-1.amazonaws.com/product/amount/decrement/productId/p-1/value/1'

@@ -102,6 +102,14 @@ public class DynamoDbCrudFlowStack extends Stack {
                 .build());
 
         httpApi.addRoutes(AddRoutesOptions.builder()
+                .path("/product/amount/decrement/productId/{productId}/value/{value}")
+                .integration(HttpLambdaIntegration.Builder.create("product-handler-lambda-integration", productHandlerLambda)
+                        .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)
+                        .build())
+                .methods(List.of(HttpMethod.PUT))
+                .build());
+
+        httpApi.addRoutes(AddRoutesOptions.builder()
                 .path("/product")
                 .integration(HttpLambdaIntegration.Builder.create("product-handler-lambda-integration", productHandlerLambda)
                         .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)

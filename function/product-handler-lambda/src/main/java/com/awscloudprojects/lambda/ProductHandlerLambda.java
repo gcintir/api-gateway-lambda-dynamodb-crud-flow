@@ -51,14 +51,23 @@ public class ProductHandlerLambda implements RequestHandler<APIGatewayProxyReque
                 apiGatewayProxyResponseEvent.setBody("Product saved with id:" + product.getProductId());
                 apiGatewayProxyResponseEvent.setStatusCode(200);
             } else if (event.getHttpMethod().equals("PUT")) {
-                Product product = objectMapper.readValue(event.getBody(), Product.class);
-                updateProduct(product);
-                apiGatewayProxyResponseEvent.setBody("Product updated with id:" + product.getProductId());
-                apiGatewayProxyResponseEvent.setStatusCode(200);
+                if (event.getPath().startsWith("/product/amount/decrement")) {
+                    Map<String, String> pathParameters = event.getPathParameters();
+                    String productId = Objects.nonNull(pathParameters.get("productId")) ? pathParameters.get("productId") : null;
+                    String value = Objects.nonNull(pathParameters.get("value")) ? pathParameters.get("value") : null;
+                    logger.info("received productId:{} value:{}", productId, value);
+                    decrementStockByValue(productId, Integer.parseInt(value));
+                    apiGatewayProxyResponseEvent.setBody("ok");
+                    apiGatewayProxyResponseEvent.setStatusCode(200);
+                } else {
+                    Product product = objectMapper.readValue(event.getBody(), Product.class);
+                    updateProduct(product);
+                    apiGatewayProxyResponseEvent.setBody("Product updated with id:" + product.getProductId());
+                    apiGatewayProxyResponseEvent.setStatusCode(200);
+                }
             } else if (event.getHttpMethod().equals("GET")) {
                 Map<String, String> queryParametersMap = event.getQueryStringParameters();
                 String productId = Objects.nonNull(queryParametersMap.get("productId")) ? queryParametersMap.get("productId") : null;
-                logger.info("productId:{}", productId);
                 Optional<Product> productOpt = getProductById(productId);
                 if (productOpt.isPresent()) {
                     apiGatewayProxyResponseEvent.setBody(objectMapper.writeValueAsString(productOpt.get()));
@@ -67,7 +76,6 @@ public class ProductHandlerLambda implements RequestHandler<APIGatewayProxyReque
                     apiGatewayProxyResponseEvent.setBody("Product not found with id:" + productId);
                     apiGatewayProxyResponseEvent.setStatusCode(404);
                 }
-
             } else if (event.getHttpMethod().equals("DELETE")) {
                 Map<String, String> pathParameters = event.getPathParameters();
                 String productId = Objects.nonNull(pathParameters.get("productId")) ? pathParameters.get("productId") : null;
@@ -200,6 +208,30 @@ public class ProductHandlerLambda implements RequestHandler<APIGatewayProxyReque
 
             DeleteItemResponse deleteItemResponse = dynamoDbClient.deleteItem(deleteItemRequest);
             logger.info("Product deleted with statusCode:{} requestId:{}", deleteItemResponse.sdkHttpResponse().statusCode(), deleteItemResponse.responseMetadata().requestId());
+
+        } catch (DynamoDbException e) {
+            logger.error("DynamoDB exception", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void decrementStockByValue (String productId, int value) {
+        try {
+            HashMap<String, AttributeValue> keyMap = new HashMap<>();
+            keyMap.put("product_id", AttributeValue.builder().s(productId).build());
+
+            UpdateItemRequest updateItemRequest = UpdateItemRequest.builder()
+                    .tableName(DDB_TABLE_NAME)
+                    .key(keyMap)
+                    .conditionExpression("#amount > :zero")
+                    .updateExpression("SET #amount = #amount - :val")
+                    .expressionAttributeNames(Map.of("#amount", "stock_amount"))
+                    .expressionAttributeValues(Map.of(":val", AttributeValue.builder().n(String.valueOf(value)).build(),
+                                                       ":zero", AttributeValue.builder().n(String.valueOf(0)).build()))
+                    .build();
+
+            UpdateItemResponse updateItemResponse = dynamoDbClient.updateItem(updateItemRequest);
+            logger.info("Product stock amount decremented by amount:{} with statusCode:{} requestId:{}", value, updateItemResponse.sdkHttpResponse().statusCode(), updateItemResponse.responseMetadata().requestId());
 
         } catch (DynamoDbException e) {
             logger.error("DynamoDB exception", e);

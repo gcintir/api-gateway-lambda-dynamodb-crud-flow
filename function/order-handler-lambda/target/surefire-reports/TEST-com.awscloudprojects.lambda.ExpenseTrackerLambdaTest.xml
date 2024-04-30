@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite tests="1" failures="0" name="com.awscloudprojects.lambda.ExpenseTrackerLambdaTest" time="0.006" errors="0" skipped="0">
+<testsuite tests="1" failures="0" name="com.awscloudprojects.lambda.ExpenseTrackerLambdaTest" time="0.007" errors="0" skipped="0">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="java.vm.version" value="17.0.9+11-LTS-jvmci-23.0-b21"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\graalvm\graalvm-jdk-17\bin"/>
     <property name="user.country.format" value="TR"/>
-    <property name="maven.multiModuleProjectDirectory" value="C:\Users\gueray.cintir\Documents\personal\projects\serverless\api-gateway-lambda-dynamodb-crud-flow\function\product-handler-lambda"/>
+    <property name="maven.multiModuleProjectDirectory" value="C:\Users\gueray.cintir\Documents\personal\projects\serverless\api-gateway-lambda-dynamodb-crud-flow\function\order-handler-lambda"/>
     <property name="java.vm.vendor" value="Oracle Corporation"/>
     <property name="java.vendor.url" value="https://java.oracle.com/"/>
     <property name="guice.disable.misplaced.annotation.check" value="true"/>
@@ -16,7 +16,7 @@
     <property name="user.country" value="US"/>
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
-    <property name="user.dir" value="C:\Users\gueray.cintir\Documents\personal\projects\serverless\api-gateway-lambda-dynamodb-crud-flow\function\product-handler-lambda"/>
+    <property name="user.dir" value="C:\Users\gueray.cintir\Documents\personal\projects\serverless\api-gateway-lambda-dynamodb-crud-flow\function\order-handler-lambda"/>
     <property name="java.vm.compressedOopsMode" value="Zero based"/>
     <property name="java.runtime.version" value="17.0.9+11-LTS-jvmci-23.0-b21"/>
     <property name="os.arch" value="amd64"/>
@@ -65,5 +65,5 @@
     <property name="sun.stdout.encoding" value="cp857"/>
     <property name="sun.cpu.isalist" value="amd64"/>
   </properties>
-  <testcase classname="com.awscloudprojects.lambda.ExpenseTrackerLambdaTest" name="shouldAnswerWithTrue" time="0.006"/>
+  <testcase classname="com.awscloudprojects.lambda.ExpenseTrackerLambdaTest" name="shouldAnswerWithTrue" time="0.007"/>
 </testsuite>

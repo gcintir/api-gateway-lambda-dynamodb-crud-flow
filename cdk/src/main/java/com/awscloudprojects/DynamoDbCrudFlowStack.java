@@ -28,31 +28,61 @@ public class DynamoDbCrudFlowStack extends Stack {
     public DynamoDbCrudFlowStack(final Construct scope, final String id, final StackProps props) {
         super(scope, id, props);
 
-        Role executionRole = Role.Builder.create(this, id + "-ProductHandlerLambdaRole")
+        Role productHandlerLambdaexecutionRole = Role.Builder.create(this, id + "-ProductHandlerLambdaRole")
                 .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
                 .roleName(id + "-ProductHandlerLambdaRole")
                 .build();
-        executionRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"));
+        productHandlerLambdaexecutionRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"));
 
-        String functionName = id + "-ProductHandlerLambda";
-        Function productHandlerLambda = Function.Builder.create(this, functionName)
+        String productHandlerLambdaFunctionName = id + "-ProductHandlerLambda";
+        Function productHandlerLambda = Function.Builder.create(this, productHandlerLambdaFunctionName)
                 .runtime(Runtime.JAVA_21)
                 .code(Code.fromAsset("../function/product-handler-lambda/target/product-handler-lambda.jar"))
                 .handler("com.awscloudprojects.lambda.ProductHandlerLambda::handleRequest")
-                .functionName(functionName)
-                .role(executionRole)
+                .functionName(productHandlerLambdaFunctionName)
+                .role(productHandlerLambdaexecutionRole)
                 .timeout(Duration.seconds(30L))
                 .memorySize(512)
-                .logGroup(LogGroup.Builder.create(this, functionName + "-logGroup")
-                        .logGroupName("/aws/lambda/" + functionName)
+                .logGroup(LogGroup.Builder.create(this, productHandlerLambdaFunctionName + "-logGroup")
+                        .logGroupName("/aws/lambda/" + productHandlerLambdaFunctionName)
                         .retention(RetentionDays.ONE_DAY)
                         .removalPolicy(RemovalPolicy.DESTROY)
                         .build())
                 .build();
 
-        Table dynamoDbTable = Table.Builder.create(this, "dynamodb-table")
+        Role orderHandlerLambdaexecutionRole = Role.Builder.create(this, id + "-OrderHandlerLambdaRole")
+                .assumedBy(new ServicePrincipal("lambda.amazonaws.com"))
+                .roleName(id + "-OrderHandlerLambdaRole")
+                .build();
+        orderHandlerLambdaexecutionRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSLambdaBasicExecutionRole"));
+
+        String orderHandlerLambdaFunctionName = id + "-OrderHandlerLambda";
+        Function orderHandlerLambda = Function.Builder.create(this, orderHandlerLambdaFunctionName)
+                .runtime(Runtime.JAVA_21)
+                .code(Code.fromAsset("../function/order-handler-lambda/target/order-handler-lambda.jar"))
+                .handler("com.awscloudprojects.lambda.OrderHandlerLambda::handleRequest")
+                .functionName(orderHandlerLambdaFunctionName)
+                .role(orderHandlerLambdaexecutionRole)
+                .timeout(Duration.seconds(30L))
+                .memorySize(512)
+                .logGroup(LogGroup.Builder.create(this, orderHandlerLambdaFunctionName + "-logGroup")
+                        .logGroupName("/aws/lambda/" + orderHandlerLambdaFunctionName)
+                        .retention(RetentionDays.ONE_DAY)
+                        .removalPolicy(RemovalPolicy.DESTROY)
+                        .build())
+                .build();
+
+        Table productsDynamoDbTable = Table.Builder.create(this, "products-dynamodb-table")
                 .tableName("products")
                 .partitionKey(Attribute.builder().name("product_id").type(AttributeType.STRING).build())
+                .billingMode(BillingMode.PAY_PER_REQUEST)
+                .removalPolicy(RemovalPolicy.DESTROY)
+                .build();
+
+        Table ordersDynamoDbTable = Table.Builder.create(this, "orders-dynamodb-table")
+                .tableName("orders")
+                .partitionKey(Attribute.builder().name("user_id").type(AttributeType.STRING).build())
+                .sortKey(Attribute.builder().name("order_id").type(AttributeType.STRING).build())
                 .billingMode(BillingMode.PAY_PER_REQUEST)
                 .removalPolicy(RemovalPolicy.DESTROY)
                 .build();
@@ -78,7 +108,8 @@ public class DynamoDbCrudFlowStack extends Stack {
 
          */
 
-        dynamoDbTable.grantFullAccess(productHandlerLambda);
+        productsDynamoDbTable.grantFullAccess(productHandlerLambda);
+        ordersDynamoDbTable.grantFullAccess(orderHandlerLambda);
 
         HttpApi httpApi = HttpApi.Builder.create(this, "http-api-gateway")
                 .apiName(id + "-http-api-gateway")
@@ -123,6 +154,32 @@ public class DynamoDbCrudFlowStack extends Stack {
                         .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)
                         .build())
                 .methods(List.of(HttpMethod.DELETE))
+                .build());
+
+        //////////////////////////
+
+        httpApi.addRoutes(AddRoutesOptions.builder()
+                .path("/order")
+                .integration(HttpLambdaIntegration.Builder.create("order-handler-lambda-integration", orderHandlerLambda)
+                        .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)
+                        .build())
+                .methods(List.of(HttpMethod.POST))
+                .build());
+
+        httpApi.addRoutes(AddRoutesOptions.builder()
+                .path("/order")
+                .integration(HttpLambdaIntegration.Builder.create("order-handler-lambda-integration", orderHandlerLambda)
+                        .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)
+                        .build())
+                .methods(List.of(HttpMethod.GET))
+                .build());
+
+        httpApi.addRoutes(AddRoutesOptions.builder()
+                .path("/order/prices/{userId}")
+                .integration(HttpLambdaIntegration.Builder.create("order-handler-lambda-integration", orderHandlerLambda)
+                        .payloadFormatVersion(PayloadFormatVersion.VERSION_1_0)
+                        .build())
+                .methods(List.of(HttpMethod.GET))
                 .build());
 
     }

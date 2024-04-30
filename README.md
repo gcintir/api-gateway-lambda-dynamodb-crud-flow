@@ -43,3 +43,23 @@ curl --location --request GET 'https://jsmulddoee.execute-api.us-east-1.amazonaw
 curl --location --request DELETE 'https://jsmulddoee.execute-api.us-east-1.amazonaws.com/product/p-1'
 
 curl --location --request PUT 'https://jsmulddoee.execute-api.us-east-1.amazonaws.com/product/amount/decrement/productId/p-1/value/1'
+
+
+-----------------------------------
+
+
+curl --location --request POST 'https://f7ep1ug7x9.execute-api.us-east-1.amazonaws.com/order' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "userId": "u-1",
+    "orderId": "o-1",
+    "price": 100
+}'
+
+curl --location --request GET 'https://f7ep1ug7x9.execute-api.us-east-1.amazonaws.com/order'
+
+curl --location --request GET 'https://f7ep1ug7x9.execute-api.us-east-1.amazonaws.com/order/prices/u-1'
+
+curl --location --request GET 'https://f7ep1ug7x9.execute-api.us-east-1.amazonaws.com/order?userId=u-1'
+
+curl --location --request GET 'https://f7ep1ug7x9.execute-api.us-east-1.amazonaws.com/order?userId=u-1&minPrice=10&maxPrice=2000'
